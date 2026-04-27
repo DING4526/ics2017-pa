@@ -38,6 +38,8 @@ static int cmd_q(char *args) {
 
 static int cmd_help(char *args);
 
+static int cmd_si(char *args);
+
 static struct {
   char *name;
   char *description;
@@ -48,6 +50,7 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
+  { "si", "Step instruction N times; The default N is 1", cmd_si },
 
 };
 
@@ -75,6 +78,38 @@ static int cmd_help(char *args) {
   }
   return 0;
 }
+
+static int cmd_si(char *args) {
+  uint64_t n = 1;
+
+  if (args != NULL) {
+    while (*args == ' ') { args ++; }
+
+    if (*args == '\0' || *args == '-') {
+      printf("Usage: si [N]\n");
+      return 0;
+    }
+
+    for (char *p = args; *p != '\0'; p ++) {
+      if (*p < '0' || *p > '9') {
+        printf("Usage: si [N]\n");
+        return 0;
+      }
+    }
+
+    n = strtoull(args, NULL, 10);
+
+    if (n == 0) {
+      printf("Usage: si [N]\n");
+      return 0;
+    }
+  }
+
+  cpu_exec(n);
+  return 0;
+}
+
+
 
 void ui_mainloop(int is_batch_mode) {
   if (is_batch_mode) {
