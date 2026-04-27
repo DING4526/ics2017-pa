@@ -85,11 +85,11 @@ static int cmd_si(char *args) {
   if (args != NULL) {
     while (*args == ' ') { args ++; }
 
+    // 检查args是不是全为数字
     if (*args == '\0' || *args == '-') {
       printf("Usage: si [N]\n");
       return 0;
     }
-
     for (char *p = args; *p != '\0'; p ++) {
       if (*p < '0' || *p > '9') {
         printf("Usage: si [N]\n");
@@ -97,6 +97,7 @@ static int cmd_si(char *args) {
       }
     }
 
+    // 将args字符串转成10进制数n
     n = strtoull(args, NULL, 10);
 
     if (n == 0) {
@@ -105,6 +106,7 @@ static int cmd_si(char *args) {
     }
   }
 
+  // 执行n条指令
   cpu_exec(n);
   return 0;
 }
