@@ -43,6 +43,7 @@ static int cmd_help(char *args);
 static int cmd_si(char *args);
 static int cmd_info(char *args);
 static int cmd_x(char *args);
+static int cmd_p(char *args);
 
 static struct {
   char *name;
@@ -57,6 +58,7 @@ static struct {
   { "si", "Step instruction N times; The default N is 1", cmd_si },
   { "info", "Print the program state", cmd_info },
   { "x", "Examine memory", cmd_x },
+  { "p", "Print the value of an expression", cmd_p },
 
 };
 
@@ -185,6 +187,25 @@ static int cmd_x(char *args) {
   for (i = 0; i < n; i ++) {
     uint32_t data = vaddr_read(addr + i * 4, 4);
     printf("0x%08x:\t0x%08x\n", addr + i * 4, data);
+  }
+
+  return 0;
+}
+
+static int cmd_p(char *args) {
+  if (args == NULL) {
+    printf("Usage: p EXPR\n");
+    return 0;
+  }
+
+  bool success = true;
+  uint32_t result = expr(args, &success);
+
+  if (success) {
+    printf("0x%x (%u)\n", result, result);
+  }
+  else {
+    printf("Bad expression\n");
   }
 
   return 0;
