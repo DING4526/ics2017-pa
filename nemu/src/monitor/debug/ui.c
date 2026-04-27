@@ -2,6 +2,7 @@
 #include "monitor/expr.h"
 #include "monitor/watchpoint.h"
 #include "nemu.h"
+#include "cpu/reg.h"
 
 #include <stdlib.h>
 #include <readline/readline.h>
@@ -39,6 +40,7 @@ static int cmd_q(char *args) {
 static int cmd_help(char *args);
 
 static int cmd_si(char *args);
+static int cmd_info(char *args);
 
 static struct {
   char *name;
@@ -51,6 +53,7 @@ static struct {
 
   /* TODO: Add more commands */
   { "si", "Step instruction N times; The default N is 1", cmd_si },
+  { "info", "Print the program state", cmd_info },
 
 };
 
@@ -108,6 +111,39 @@ static int cmd_si(char *args) {
 
   // 执行n条指令
   cpu_exec(n);
+  return 0;
+}
+
+static int cmd_info(char *args) {
+  if (args == NULL) {
+    printf("Usage: info [<SUBCMD>]\n");
+    printf("SUBCMD list:\n");
+    printf("  r - show registers\n");
+    return 0;
+  }
+
+  char *subcmd = strtok(args, " ");
+
+  if (subcmd == NULL) {
+    printf("Usage: info [<SUBCMD>]\n");
+    printf("SUBCMD list:\n");
+    printf("  r - show registers\n");
+    return 0;
+  }
+
+  // r - 打印寄存器状态
+  if (strcmp(subcmd, "r") == 0) {
+    int i;
+    for (i = 0; i < 8; i ++) {
+      printf("%s\t0x%08x\t%u\n", regsl[i], reg_l(i), reg_l(i));
+    }
+
+    printf("eip\t0x%08x\t%u\n", cpu.eip, cpu.eip);
+  }
+  else {
+    printf("Unknown subcommand 'info %s'\n", subcmd);
+  }
+
   return 0;
 }
 
