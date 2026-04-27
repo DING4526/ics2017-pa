@@ -3,6 +3,7 @@
 #include "monitor/watchpoint.h"
 #include "nemu.h"
 #include "cpu/reg.h"
+#include "memory/memory.h"
 
 #include <stdlib.h>
 #include <readline/readline.h>
@@ -41,6 +42,7 @@ static int cmd_help(char *args);
 
 static int cmd_si(char *args);
 static int cmd_info(char *args);
+static int cmd_x(char *args);
 
 static struct {
   char *name;
@@ -54,6 +56,7 @@ static struct {
   /* TODO: Add more commands */
   { "si", "Step instruction N times; The default N is 1", cmd_si },
   { "info", "Print the program state", cmd_info },
+  { "x", "Examine memory", cmd_x },
 
 };
 
@@ -147,6 +150,45 @@ static int cmd_info(char *args) {
   return 0;
 }
 
+static int cmd_x(char *args) {
+  if (args == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+
+  char *n_str = strtok(args, " ");
+  char *expr_str = strtok(NULL, "");
+
+  if (n_str == NULL || expr_str == NULL) {
+    printf("Usage: x N EXPR\n");
+    return 0;
+  }
+
+  char *endptr = NULL;
+  int n = strtol(n_str, &endptr, 10);
+
+  if (endptr == n_str || n <= 0) {
+    printf("Invalid N: %s\n", n_str);
+    return 0;
+  }
+
+  endptr = NULL;
+  // 目前仅支持纯数字地址
+  vaddr_t addr = strtoul(expr_str, &endptr, 0);
+
+  if (endptr == expr_str) {
+    printf("Invalid address expression: %s\n", expr_str);
+    return 0;
+  }
+
+  int i;
+  for (i = 0; i < n; i ++) {
+    uint32_t data = vaddr_read(addr + i * 4, 4);
+    printf("0x%08x:\t0x%08x\n", addr + i * 4, data);
+  }
+
+  return 0;
+}
 
 
 void ui_mainloop(int is_batch_mode) {
