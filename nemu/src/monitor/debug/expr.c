@@ -117,6 +117,7 @@ static bool make_token(char *e) {
 
           case TK_NUM:
           case TK_HEX:
+          case TK_REG:
             assert(nr_token < 32);
             assert(substr_len < 32);
             tokens[nr_token].type = rules[i].token_type;
@@ -169,9 +170,6 @@ static bool make_token(char *e) {
     }
     else if (type == '-' && unary) {
       tokens[i].type = TK_NEG;
-    }
-    else if (type == '!') {
-      tokens[i].type = TK_NOT;
     }
   }
 
@@ -338,27 +336,6 @@ static uint32_t eval(int p, int q, bool *success) {
     return eval(p + 1, q - 1, success);
   }
 
-  // 增加对一元运算符的处理
-  if (is_unary_operator(tokens[p].type)) {
-    uint32_t val = eval(p + 1, q, success);
-    if (!*success) return 0;
-
-    switch (tokens[p].type) {
-      case TK_NEG:
-        return -val;
-
-      case TK_NOT:
-        return !val;
-
-      case TK_DEREF:
-        return vaddr_read(val, 4);
-
-      default:
-        *success = false;
-        return 0;
-    }
-  }
-
   int op = find_dominant_op(p, q);
 
   if (op == -1) {
@@ -410,6 +387,31 @@ static uint32_t eval(int p, int q, bool *success) {
       *success = false;
       return 0;
   }
+
+  
+  // 增加对一元运算符的处理（在二元运算符之后）
+  if (is_unary_operator(tokens[p].type)) {
+    uint32_t val = eval(p + 1, q, success);
+    if (!*success) return 0;
+
+    switch (tokens[p].type) {
+      case TK_NEG:
+        return -val;
+
+      case TK_NOT:
+        return !val;
+
+      case TK_DEREF:
+        return vaddr_read(val, 4);
+
+      default:
+        *success = false;
+        return 0;
+    }
+  }
+
+  *success = false;
+  return 0;
 }
 
 
