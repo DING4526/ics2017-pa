@@ -315,7 +315,7 @@ static uint32_t eval(int p, int q, bool *success) {
     return 0;
   }
 
-  if (p == q) {
+  else if (p == q) {
     if (tokens[p].type == TK_NUM) {
       return strtoul(tokens[p].str, NULL, 10);
     }
@@ -332,86 +332,60 @@ static uint32_t eval(int p, int q, bool *success) {
     return 0;
   }
 
-  if (check_parentheses(p, q)) {
+  else if (check_parentheses(p, q)) {
     return eval(p + 1, q - 1, success);
   }
 
-  int op = find_dominant_op(p, q);
+  else {
+    int op = find_dominant_op(p, q);
 
-  if (op == -1) {
+    if (op != -1) {
+      uint32_t val1 = eval(p, op - 1, success);
+      if (!*success) return 0;
+
+      uint32_t val2 = eval(op + 1, q, success);
+      if (!*success) return 0;
+
+      switch (tokens[op].type) {
+        case '+': return val1 + val2;
+        case '-': return val1 - val2;
+        case '*': return val1 * val2;
+        case '/':
+          if (val2 == 0) {
+            printf("Error: division by zero\n");
+            *success = false; return 0;
+          } 
+          return val1 / val2;
+        case TK_EQ: return val1 == val2;
+        case TK_NEQ: return val1 != val2;
+        case TK_AND: return val1 && val2;
+        case TK_OR: return val1 || val2;
+
+        default:
+          *success = false;
+          return 0;
+      }
+    }
+
+    // 增加对一元运算符的处理（在二元运算符之后）
+    if (is_unary_operator(tokens[p].type)) {
+      uint32_t val = eval(p + 1, q, success);
+      if (!*success) return 0;
+
+      switch (tokens[p].type) {
+        case TK_NEG: return -val;
+        case TK_NOT: return !val;
+        case TK_DEREF: return vaddr_read(val, 4);
+
+        default:
+          *success = false;
+          return 0;
+      }
+    }
+
     *success = false;
     return 0;
-  }
-
-  uint32_t val1 = eval(p, op - 1, success);
-  if (!*success) {
-    return 0;
-  }
-
-  uint32_t val2 = eval(op + 1, q, success);
-  if (!*success) {
-    return 0;
-  }
-
-  switch (tokens[op].type) {
-    case '+':
-      return val1 + val2;
-
-    case '-':
-      return val1 - val2;
-
-    case '*':
-      return val1 * val2;
-
-    case '/':
-      if (val2 == 0) {
-        printf("Error: division by zero\n");
-        *success = false;
-        return 0;
-      }
-      return val1 / val2;
-
-    case TK_EQ:
-      return val1 == val2;
-
-    case TK_NEQ:
-      return val1 != val2;
-
-    case TK_AND:
-      return val1 && val2;
-
-    case TK_OR:
-      return val1 || val2;
-
-    default:
-      *success = false;
-      return 0;
-  }
-
-  
-  // 增加对一元运算符的处理（在二元运算符之后）
-  if (is_unary_operator(tokens[p].type)) {
-    uint32_t val = eval(p + 1, q, success);
-    if (!*success) return 0;
-
-    switch (tokens[p].type) {
-      case TK_NEG:
-        return -val;
-
-      case TK_NOT:
-        return !val;
-
-      case TK_DEREF:
-        return vaddr_read(val, 4);
-
-      default:
-        *success = false;
-        return 0;
-    }
-  }
-
-  *success = false;
-  return 0;
+  } 
 }
 
 
