@@ -174,12 +174,12 @@ static int cmd_x(char *args) {
     return 0;
   }
 
-  endptr = NULL;
-  // 目前仅支持纯数字地址
-  vaddr_t addr = strtoul(expr_str, &endptr, 0);
+  // 升级为 EXPR 支持
+  bool success = true;
+  vaddr_t addr = expr(expr_str, &success);
 
-  if (endptr == expr_str) {
-    printf("Invalid address expression: %s\n", expr_str);
+  if (!success) {
+    printf("Bad expression: %s\n", expr_str);
     return 0;
   }
 
