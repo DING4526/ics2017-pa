@@ -44,6 +44,8 @@ static int cmd_si(char *args);
 static int cmd_info(char *args);
 static int cmd_x(char *args);
 static int cmd_p(char *args);
+static int cmd_w(char *args);
+static int cmd_d(char *args);
 
 static struct {
   char *name;
@@ -55,10 +57,12 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
 
   /* TODO: Add more commands */
-  { "si", "Step instruction N times; The default N is 1", cmd_si },
-  { "info", "Print the program state", cmd_info },
+  { "si", "Step instruction", cmd_si },
+  { "info", "Print program state", cmd_info },
   { "x", "Examine memory", cmd_x },
   { "p", "Print the value of an expression", cmd_p },
+  { "w", "Set watchpoint", cmd_w },
+  { "d", "Delete watchpoint", cmd_d },
 
 };
 
@@ -124,6 +128,7 @@ static int cmd_info(char *args) {
     printf("Usage: info [<SUBCMD>]\n");
     printf("SUBCMD list:\n");
     printf("  r - show registers\n");
+    printf("  w - show watchpoints\n");
     return 0;
   }
 
@@ -133,6 +138,7 @@ static int cmd_info(char *args) {
     printf("Usage: info [<SUBCMD>]\n");
     printf("SUBCMD list:\n");
     printf("  r - show registers\n");
+    printf("  w - show watchpoints\n");
     return 0;
   }
 
@@ -144,6 +150,10 @@ static int cmd_info(char *args) {
     }
 
     printf("eip\t0x%08x\t%u\n", cpu.eip, cpu.eip);
+  }
+  // w - 打印监视点状态
+  else if (strcmp(subcmd, "w") == 0) {
+    display_watchpoints();
   }
   else {
     printf("Unknown subcommand 'info %s'\n", subcmd);
@@ -208,6 +218,34 @@ static int cmd_p(char *args) {
     printf("Bad expression\n");
   }
 
+  return 0;
+}
+
+static int cmd_w(char *args) {
+  if (args == NULL) {
+    printf("Usage: w EXPR\n");
+    return 0;
+  }
+
+  new_wp(args);
+  return 0;
+}
+
+static int cmd_d(char *args) {
+  if (args == NULL) {
+    printf("Usage: d N\n");
+    return 0;
+  }
+
+  char *endptr = NULL;
+  int no = strtol(args, &endptr, 10);
+
+  if (endptr == args || no < 0) {
+    printf("Invalid watchpoint number: %s\n", args);
+    return 0;
+  }
+
+  free_wp(no);
   return 0;
 }
 
