@@ -1,4 +1,6 @@
 #include "nemu.h"
+#include "cpu/reg.h"
+#include "memory/memory.h"
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
@@ -13,7 +15,15 @@ enum {
 
   /* TODO: Add more token types */
   TK_NUM,
-  TK_HEX
+  TK_HEX,
+
+  TK_REG,    // $eax 这种寄存器
+  TK_NEQ,    // !=
+  TK_AND,    // &&
+  TK_OR,     // ||
+  TK_DEREF,  // *addr 解引用
+  TK_NEG,    // -1 负号
+  TK_NOT     // !expr 逻辑非
 
 };
 
@@ -31,13 +41,18 @@ static struct rule {
   // hex 要放前面，优先级更高
   {"0[xX][0-9a-fA-F]+", TK_HEX},  // hex numbers
   {"[0-9]+", TK_NUM},   // decimal numbers
+  {"\\$[a-zA-Z]+", TK_REG},   // 寄存器
 
   {"==", TK_EQ},        // equal
+  {"!=", TK_NEQ},       // not equal
+  {"&&", TK_AND},       // logical and
+  {"\\|\\|", TK_OR},    // logical or
 
   {"\\+", '+'},             // plus
   {"-", '-'},               // minus
   {"\\*", '*'},             // multiply
   {"/", '/'},               // divide
+  {"!", TK_NOT},            // logical not
   {"\\(", '('},             // left parenthesis
   {"\\)", ')'},             // right parenthesis
 
@@ -128,6 +143,38 @@ static bool make_token(char *e) {
     }
   }
 
+  for (i = 0; i < nr_token; i ++) {
+    int type = tokens[i].type;
+
+    bool unary = false;
+
+    if (i == 0) {
+      unary = true;
+    }
+    else {
+      int prev = tokens[i - 1].type;
+
+      if (prev == '(' ||
+          prev == '+' || prev == '-' ||
+          prev == '*' || prev == '/' ||
+          prev == TK_EQ || prev == TK_NEQ ||
+          prev == TK_AND || prev == TK_OR ||
+          prev == TK_DEREF || prev == TK_NEG || prev == TK_NOT) {
+        unary = true;
+      }
+    }
+
+    if (type == '*' && unary) {
+      tokens[i].type = TK_DEREF;
+    }
+    else if (type == '-' && unary) {
+      tokens[i].type = TK_NEG;
+    }
+    else if (type == '!') {
+      tokens[i].type = TK_NOT;
+    }
+  }
+
   return true;
 }
 
@@ -164,25 +211,43 @@ static bool check_parentheses(int p, int q) {
 // 定义运算符优先级，数字越大优先级越高
 static int precedence(int type) {
   switch (type) {
-    case TK_EQ:
+    case TK_OR:
       return 1;
+
+    case TK_AND:
+      return 2;
+
+    case TK_EQ:
+    case TK_NEQ:
+      return 3;
 
     case '+':
     case '-':
-      return 2;
+      return 4;
 
     case '*':
     case '/':
-      return 3;
+      return 5;
+
+    case TK_DEREF:
+    case TK_NEG:
+    case TK_NOT:
+      return 6;
 
     default:
       return 100;
   }
 }
 
-// 判断type是否为运算符
-static bool is_operator(int type) {
-  return type == TK_EQ || type == '+' || type == '-' || type == '*' || type == '/';
+// 区分一元二元运算符
+static bool is_binary_operator(int type) {
+  return type == TK_OR || type == TK_AND ||
+         type == TK_EQ || type == TK_NEQ ||
+         type == '+' || type == '-' ||
+         type == '*' || type == '/';
+}
+static bool is_unary_operator(int type) {
+  return type == TK_DEREF || type == TK_NEG || type == TK_NOT;
 }
 
 // 在tokens[p..q]中找到优先级最低的运算符，并返回其位置
@@ -211,7 +276,8 @@ static int find_dominant_op(int p, int q) {
       continue;
     }
 
-    if (!is_operator(type)) {
+    // 只找二元运算符参与比较
+    if (!is_binary_operator(type)) {
       continue;
     }
 
@@ -225,6 +291,23 @@ static int find_dominant_op(int p, int q) {
   }
 
   return op;
+}
+
+// 从字符串s中解析出寄存器的值
+static uint32_t get_reg_val(char *s, bool *success) {
+  if (strcmp(s, "$eax") == 0) return cpu.eax;
+  if (strcmp(s, "$ecx") == 0) return cpu.ecx;
+  if (strcmp(s, "$edx") == 0) return cpu.edx;
+  if (strcmp(s, "$ebx") == 0) return cpu.ebx;
+  if (strcmp(s, "$esp") == 0) return cpu.esp;
+  if (strcmp(s, "$ebp") == 0) return cpu.ebp;
+  if (strcmp(s, "$esi") == 0) return cpu.esi;
+  if (strcmp(s, "$edi") == 0) return cpu.edi;
+  if (strcmp(s, "$eip") == 0) return cpu.eip;
+
+  printf("Unknown register: %s\n", s);
+  *success = false;
+  return 0;
 }
 
 // 递归计算tokens[p..q]表达式的值
@@ -243,12 +326,37 @@ static uint32_t eval(int p, int q, bool *success) {
       return strtoul(tokens[p].str, NULL, 16);
     }
 
+    if (tokens[p].type == TK_REG) {
+      return get_reg_val(tokens[p].str, success);
+    }
+
     *success = false;
     return 0;
   }
 
   if (check_parentheses(p, q)) {
     return eval(p + 1, q - 1, success);
+  }
+
+  // 增加对一元运算符的处理
+  if (is_unary_operator(tokens[p].type)) {
+    uint32_t val = eval(p + 1, q, success);
+    if (!*success) return 0;
+
+    switch (tokens[p].type) {
+      case TK_NEG:
+        return -val;
+
+      case TK_NOT:
+        return !val;
+
+      case TK_DEREF:
+        return vaddr_read(val, 4);
+
+      default:
+        *success = false;
+        return 0;
+    }
   }
 
   int op = find_dominant_op(p, q);
@@ -288,6 +396,15 @@ static uint32_t eval(int p, int q, bool *success) {
 
     case TK_EQ:
       return val1 == val2;
+
+    case TK_NEQ:
+      return val1 != val2;
+
+    case TK_AND:
+      return val1 && val2;
+
+    case TK_OR:
+      return val1 || val2;
 
     default:
       *success = false;
