@@ -126,6 +126,13 @@ void init_qemu_reg() {
   assert(ok == 1);
 }
 
+static void check_reg(const char *name, uint32_t nemu, uint32_t qemu, bool *diff) {
+  if (nemu != qemu) {
+    printf("DIFF at %s: nemu = 0x%08x, qemu = 0x%08x\n", name, nemu, qemu);
+    *diff = true;
+  }
+}
+
 void difftest_step(uint32_t eip) {
   union gdb_regs r;
   bool diff = false;
@@ -149,9 +156,20 @@ void difftest_step(uint32_t eip) {
 
   // TODO: Check the registers state with QEMU.
   // Set `diff` as `true` if they are not the same.
-  TODO();
+  check_reg("eax", cpu.eax, r.eax, &diff);
+  check_reg("ecx", cpu.ecx, r.ecx, &diff);
+  check_reg("edx", cpu.edx, r.edx, &diff);
+  check_reg("ebx", cpu.ebx, r.ebx, &diff);
+  check_reg("esp", cpu.esp, r.esp, &diff);
+  check_reg("ebp", cpu.ebp, r.ebp, &diff);
+  check_reg("esi", cpu.esi, r.esi, &diff);
+  check_reg("edi", cpu.edi, r.edi, &diff);
+  check_reg("eip", cpu.eip, r.eip, &diff);
+
+  // check_reg("eflags", cpu.eflags, r.eflags, &diff);
 
   if (diff) {
+    printf("DIFFTEST failed after executing instruction at eip = 0x%08x\n", eip);
     nemu_state = NEMU_END;
   }
 }
