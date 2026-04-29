@@ -20,9 +20,6 @@ void rtc_io_handler(ioaddr_t addr, int len, bool is_write) {
     uint32_t seconds = now.tv_sec;
     uint32_t useconds = now.tv_usec;
     rtc_port_base[0] = seconds * 1000 + (useconds + 500) / 1000;
-
-    printf("RTC read: addr=0x%x len=%d value=%u\n",
-        addr, len, rtc_port_base[0]);
   }
 }
 
