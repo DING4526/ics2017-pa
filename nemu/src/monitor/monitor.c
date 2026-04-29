@@ -90,6 +90,8 @@ static inline void restart() {
   /* Set the initial instruction pointer. */
   cpu.eip = ENTRY_START;
 
+  cpu.esp = 0x200000;
+
 #ifdef DIFF_TEST
   init_qemu_reg();
 #endif
