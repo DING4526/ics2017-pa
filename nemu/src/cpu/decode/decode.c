@@ -38,7 +38,16 @@ static inline make_DopHelper(SI) {
    *
    op->simm = ???
    */
-  TODO();
+
+  // 先读原始数据（无符号）
+  uint32_t data = instr_fetch(eip, op->width);
+
+  // 根据宽度做符号扩展
+  if (op->width == 1) {
+    op->simm = (int32_t)(int8_t)data;
+  } else { // width == 4
+    op->simm = (int32_t)data;
+  }
 
   rtl_li(&op->val, op->simm);
 
