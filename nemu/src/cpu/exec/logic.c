@@ -97,3 +97,28 @@ make_EHelper(not) {
 
   print_asm_template1(not);
 }
+
+make_EHelper(rol) {
+  rtl_andi(&t1, &id_src->val, 0x1f);
+
+  if (t1 != 0) {
+    if (id_dest->width == 1) {
+      t1 %= 8;
+      t0 = id_dest->val & 0xff;
+      t2 = ((t0 << t1) | (t0 >> (8 - t1))) & 0xff;
+    }
+    else if (id_dest->width == 2) {
+      t1 %= 16;
+      t0 = id_dest->val & 0xffff;
+      t2 = ((t0 << t1) | (t0 >> (16 - t1))) & 0xffff;
+    }
+    else {
+      t0 = id_dest->val;
+      t2 = (t0 << t1) | (t0 >> (32 - t1));
+    }
+
+    operand_write(id_dest, &t2);
+  }
+
+  print_asm_template2(rol);
+}
