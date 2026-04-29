@@ -58,3 +58,7 @@ make_EHelper(nemu_trap);
 
 /* Operand size prefix */
 make_EHelper(operand_size);
+
+/* I/O */
+make_EHelper(in);
+make_EHelper(out);
