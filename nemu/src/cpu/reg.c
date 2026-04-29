@@ -48,6 +48,16 @@ void rtl_test() {
   rtl_set_CF(&x);
   rtl_get_CF(&y);
   assert(y == 0);
+
+  cpu.esp = 0x100000;
+
+  x = 0x12345678;
+  rtl_push(&x);
+  assert(cpu.esp == 0xffffc);
+
+  rtl_pop(&y);
+  assert(y == 0x12345678);
+  assert(cpu.esp == 0x100000);
 }
 
 void reg_test() {
