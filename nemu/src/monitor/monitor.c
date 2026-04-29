@@ -91,8 +91,9 @@ static inline void restart() {
   cpu.eip = ENTRY_START;
 
 #ifdef DIFF_TEST
-  // 固定栈地址以适配 DIFF_TEST
+  // 固定寄存器初值以适配 DIFF_TEST
   cpu.esp = 0x200000;
+  // cpu.eflags = 0x6;
 
   init_qemu_reg();
 #endif
