@@ -28,7 +28,7 @@ static inline make_DopHelper(I) {
  */
 /* sign immediate */
 static inline make_DopHelper(SI) {
-  assert(op->width == 1 || op->width == 4);
+  assert(op->width == 1 || op->width == 2 || op->width == 4);
 
   op->type = OP_TYPE_IMM;
 
@@ -45,7 +45,11 @@ static inline make_DopHelper(SI) {
   // 根据宽度做符号扩展
   if (op->width == 1) {
     op->simm = (int32_t)(int8_t)data;
-  } else { // width == 4
+  } 
+  else if (op->width == 2) {
+    op->simm = (int32_t)(int16_t)data;
+  }
+  else { // width == 4
     op->simm = (int32_t)data;
   }
 
