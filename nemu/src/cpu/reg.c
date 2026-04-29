@@ -8,6 +8,48 @@ const char *regsl[] = {"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi"};
 const char *regsw[] = {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"};
 const char *regsb[] = {"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"};
 
+void rtl_test() {
+  rtlreg_t x, y;
+
+  x = 0x80;
+  rtl_sext(&y, &x, 1);
+  assert(y == 0xffffff80);
+
+  x = 0x8000;
+  rtl_sext(&y, &x, 2);
+  assert(y == 0xffff8000);
+
+  x = 0x7f;
+  rtl_sext(&y, &x, 1);
+  assert(y == 0x7f);
+
+  x = 0;
+  rtl_update_ZF(&x, 4);
+  assert(cpu.ZF == 1);
+
+  x = 1;
+  rtl_update_ZF(&x, 4);
+  assert(cpu.ZF == 0);
+
+  x = 0x80;
+  rtl_update_SF(&x, 1);
+  assert(cpu.SF == 1);
+
+  x = 0x7f;
+  rtl_update_SF(&x, 1);
+  assert(cpu.SF == 0);
+
+  x = 1;
+  rtl_set_CF(&x);
+  rtl_get_CF(&y);
+  assert(y == 1);
+
+  x = 0;
+  rtl_set_CF(&x);
+  rtl_get_CF(&y);
+  assert(y == 0);
+}
+
 void reg_test() {
   srand(time(0));
   uint32_t sample[8];
@@ -40,4 +82,7 @@ void reg_test() {
   assert(sample[R_EDI] == cpu.edi);
 
   assert(eip_sample == cpu.eip);
+
+  // 额外的测试代码，测试一下RTL指令是否正确
+  rtl_test();
 }
