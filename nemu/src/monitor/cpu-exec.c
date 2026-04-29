@@ -5,12 +5,12 @@
 /* 额外增加一段死循环检测工具 */
 
 #ifdef DEAD_LOOP_CHECK
-#define EIP_HISTORY_SIZE 1024
-#define EIP_REPEAT_THRESHOLD 512
+  #define EIP_HISTORY_SIZE 1024
+  #define EIP_REPEAT_THRESHOLD 512
 
-static vaddr_t eip_history[EIP_HISTORY_SIZE];
-static int eip_history_idx = 0;
-static int eip_history_cnt = 0;
+  static vaddr_t eip_history[EIP_HISTORY_SIZE];
+  static int eip_history_idx = 0;
+  static int eip_history_cnt = 0;
 
   static bool detect_dead_loop(vaddr_t eip) {
     int cnt = 0;
