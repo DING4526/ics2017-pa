@@ -166,9 +166,8 @@ void difftest_step(uint32_t eip) {
   check_reg("edi", cpu.edi, r.edi, &diff);
   check_reg("eip", cpu.eip, r.eip, &diff);
 
-  // uint32_t mask = 0x8c1; 
-  // check_reg("eflags", cpu.eflags & mask, r.eflags & mask, &diff); 
-  check_reg("eflags", cpu.eflags, r.eflags, &diff);
+  uint32_t mask = 0x8c1; 
+  check_reg("eflags", cpu.eflags & mask, r.eflags & mask, &diff); 
 
   if (diff) {
     printf("DIFFTEST failed after executing instruction at eip = 0x%08x\n", eip);
