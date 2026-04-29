@@ -7,7 +7,7 @@
 // #define DIFF_TEST
 
 /* open dead loop check */
-// #define DEAD_LOOP_CHECK
+#define DEAD_LOOP_CHECK
 
 /* You will define this macro in PA2 */
 //#define HAS_IOE
