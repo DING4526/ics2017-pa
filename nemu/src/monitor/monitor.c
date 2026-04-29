@@ -92,7 +92,7 @@ static inline void restart() {
 
 #ifdef DIFF_TEST
   // 固定栈地址以适配 DIFF_TEST
-  // cpu.esp = 0x200000;
+  cpu.esp = 0x200000;
 
   init_qemu_reg();
 #endif
