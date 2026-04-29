@@ -90,9 +90,10 @@ static inline void restart() {
   /* Set the initial instruction pointer. */
   cpu.eip = ENTRY_START;
 
-  cpu.esp = 0x200000;
-
 #ifdef DIFF_TEST
+  // 固定栈地址以适配 DIFF_TEST
+  cpu.esp = 0x200000;
+  
   init_qemu_reg();
 #endif
 }
