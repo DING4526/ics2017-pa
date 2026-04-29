@@ -150,6 +150,9 @@ static int cmd_info(char *args) {
     }
 
     printf("eip\t0x%08x\t%u\n", cpu.eip, cpu.eip);
+
+    printf("CF=%d ZF=%d SF=%d OF=%d\n",
+       cpu.CF, cpu.ZF, cpu.SF, cpu.OF);
   }
   // w - 打印监视点状态
   else if (strcmp(subcmd, "w") == 0) {
