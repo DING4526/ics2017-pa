@@ -57,23 +57,23 @@ const uint8_t img[] = {
   // cmp eax, 5
   0x83, 0xf8, 0x05,
 
-  // jne +5    ; should not jump
+  // jne +5, not jump
   0x75, 0x05,
 
   // mov ebx, 1
   0xbb, 0x01, 0x00, 0x00, 0x00,
 
-  // je +5     ; should jump over mov ebx,2
+  // je +5, jump over mov ebx,2
   0x74, 0x05,
 
   // mov ebx, 2
   0xbb, 0x02, 0x00, 0x00, 0x00,
 
-  // call +5   ; call function
-  0xe8, 0x05, 0x00, 0x00, 0x00,
+  // call +2, jump to function
+  0xe8, 0x02, 0x00, 0x00, 0x00,
 
-  // jmp +5    ; skip function body after return
-  0xeb, 0x05,
+  // jmp +6, skip function body after return
+  0xeb, 0x06,
 
   // function:
   // mov ecx, 0x12345678
