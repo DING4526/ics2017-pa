@@ -114,7 +114,7 @@ static inline void restart() {
 #ifdef DIFF_TEST
   // 固定寄存器初值以适配 DIFF_TEST
   cpu.esp = 0x200000;
-  // cpu.eflags = 0x6;
+  cpu.eflags = 0x2;
 
   init_qemu_reg();
 #endif
