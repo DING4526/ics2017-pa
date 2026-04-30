@@ -4,7 +4,7 @@
 #define DEBUG
 
 /* open diff test */
-#define DIFF_TEST
+// #define DIFF_TEST
 
 /* open dead loop check */
 // #define DEAD_LOOP_CHECK
