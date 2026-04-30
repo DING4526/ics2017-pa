@@ -44,11 +44,32 @@ static inline int load_default_img() {
   //   0xd6,                                // 100026:  nemu_trap
   // };
 
-const uint8_t img []  = {
-  0xb8, 0x78, 0x56, 0x34, 0x12,   // mov eax, 0x12345678
-  0x50,                           // push eax
-  0x5b,                           // pop ebx
-  0xd6                            // nemu_trap
+const uint8_t img[] = {
+  // eax = 1
+  0xb8, 0x01,0x00,0x00,0x00,
+
+  // ebx = 2
+  0xbb, 0x02,0x00,0x00,0x00,
+
+  // add eax, ebx → 3
+  0x01, 0xd8,
+
+  // sub eax, 1 → 2
+  0x83, 0xe8, 0x01,
+
+  // inc eax → 3
+  0x40,
+
+  // dec eax → 2
+  0x48,
+
+  // neg eax → -2
+  0xf7, 0xd8,
+
+  // cmp eax, -2
+  0x83, 0xf8, 0xfe,
+
+  0xd6
 };
 
   Log("No image is given. Use the default build-in image.");
