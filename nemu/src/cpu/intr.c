@@ -20,8 +20,8 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
   decoding.is_jmp = 1;
   decoding.jmp_eip = target;
 
-  printf("raise_intr: NO = 0x%x, idt_base = 0x%x, idt_addr = 0x%x, target = 0x%x, ret = 0x%x\n",
-    NO, cpu.idtr.base, idt_entry, target, ret_addr);
+  // printf("raise_intr: NO = 0x%x, idt_base = 0x%x, idt_addr = 0x%x, target = 0x%x, ret = 0x%x\n",
+  //   NO, cpu.idtr.base, idt_entry, target, ret_addr);
 }
 
 void dev_raise_intr() {
