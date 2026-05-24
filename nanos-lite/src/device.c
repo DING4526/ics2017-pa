@@ -9,15 +9,15 @@ static const char *keyname[256] __attribute__((used)) = {
 };
 
 size_t events_read(void *buf, size_t len) {
-  static char event[64];
-  static int event_len = 0;
-  static int event_pos = 0;
+  static char evbuf[64];
+  static size_t evlen = 0;
+  static size_t evpos = 0;
 
   if (len == 0) {
     return 0;
   }
 
-  if (event_pos >= event_len) {
+  if (evpos >= evlen) {
     int key = _read_key();
 
     if (key != _KEY_NONE) {
@@ -25,31 +25,33 @@ size_t events_read(void *buf, size_t len) {
       int keycode = key & 0x7fff;
 
       if (keycode > _KEY_NONE && keycode < 256 && keyname[keycode] != NULL) {
-        event_len = sprintf(event, "%s %s\n",
+        sprintf(evbuf, "%s %s\n",
             is_down ? "kd" : "ku",
             keyname[keycode]);
       }
       else {
-        event_len = 0;
+        sprintf(evbuf, "t %d\n", (int)_uptime());
       }
     }
     else {
-      event_len = sprintf(event, "t %d\n", (int)_uptime());
+      sprintf(evbuf, "t %d\n", (int)_uptime());
     }
 
-    event_pos = 0;
+    evlen = strlen(evbuf);
+    evpos = 0;
   }
 
-  size_t n = event_len - event_pos;
+  size_t n = evlen - evpos;
   if (n > len) {
     n = len;
   }
 
-  memcpy(buf, event + event_pos, n);
-  event_pos += n;
+  memcpy(buf, evbuf + evpos, n);
+  evpos += n;
 
   return n;
 }
+
 
 static char dispinfo[128] __attribute__((used));
 
