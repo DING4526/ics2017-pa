@@ -29,11 +29,13 @@ int _write(int fd, void *buf, size_t count){
   return _syscall_(SYS_write, fd, (uintptr_t)buf, count);
 }
 
-void *_sbrk(intptr_t increment){
+extern char _end;
+
+void *_sbrk(intptr_t increment) {
   static uintptr_t program_break = 0;
 
   if (program_break == 0) {
-    program_break = (uintptr_t)&end;
+    program_break = (uintptr_t)&_end;
   }
 
   uintptr_t old_break = program_break;
