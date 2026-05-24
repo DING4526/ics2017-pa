@@ -47,26 +47,19 @@ void send_key(uint8_t scancode, bool is_keydown) {
   }
 }
 
-static void fetch_key_from_queue() {
-  if (key_f != key_r) {
-    i8042_data_port_base[0] = key_queue[key_f];
-    key_f = (key_f + 1) % KEY_QUEUE_LEN;
-    i8042_status_port_base[0] |= I8042_STATUS_HASKEY_MASK;
-  }
-  else {
-    i8042_status_port_base[0] &= ~I8042_STATUS_HASKEY_MASK;
-  }
-}
-
 void i8042_io_handler(ioaddr_t addr, int len, bool is_write) {
   if (!is_write) {
-    if (addr == I8042_STATUS_PORT) {
-      if ((i8042_status_port_base[0] & I8042_STATUS_HASKEY_MASK) == 0) {
-        fetch_key_from_queue();
-      }
+    if (addr == I8042_DATA_PORT) {
+      i8042_status_port_base[0] &= ~I8042_STATUS_HASKEY_MASK;
     }
-    else if (addr == I8042_DATA_PORT) {
-      fetch_key_from_queue();
+    else if (addr == I8042_STATUS_PORT) {
+      if ((i8042_status_port_base[0] & I8042_STATUS_HASKEY_MASK) == 0) {
+        if (key_f != key_r) {
+          i8042_data_port_base[0] = key_queue[key_f];
+          i8042_status_port_base[0] |= I8042_STATUS_HASKEY_MASK;
+          key_f = (key_f + 1) % KEY_QUEUE_LEN;
+        }
+      }
     }
   }
 }
