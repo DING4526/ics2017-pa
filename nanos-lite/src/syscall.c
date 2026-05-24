@@ -30,6 +30,22 @@ _RegSet* do_syscall(_RegSet *r) {
       r->eax = 0;
       break;
 
+    case SYS_open:
+      r->eax = fs_open((const char *)a[1], a[2], a[3]);
+      break;
+
+    case SYS_read:
+      r->eax = fs_read(a[1], (void *)a[2], a[3]);
+      break;
+
+    case SYS_lseek:
+      r->eax = fs_lseek(a[1], a[2], a[3]);
+      break;
+
+    case SYS_close:
+      r->eax = fs_close(a[1]);
+      break;
+
     default:
       panic("Unhandled syscall ID = %d", a[0]);
   }
