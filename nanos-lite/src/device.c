@@ -9,26 +9,18 @@ static const char *keyname[256] __attribute__((used)) = {
 };
 
 size_t events_read(void *buf, size_t len) {
-  // static int cnt = 0;
-  // if ((cnt++ % 1000) == 0) {
-  //   Log("events_read alive");
-  // }
-
   int key = _read_key();
 
   if (key != _KEY_NONE) {
-    int is_keydown = key & 0x8000;
+    int is_down = (key & 0x8000) != 0;
     int keycode = key & 0x7fff;
 
-    if (keycode >= 0 && keycode < 256) {
-      return snprintf(buf, len, "%s %s\n",
-          is_keydown ? "kd" : "ku",
-          keyname[keycode]);
-    }
+    return snprintf(buf, len, "%s %s\n",
+        is_down ? "kd" : "ku",
+        keyname[keycode]);
   }
 
-  return snprintf(buf, len, "t %d\n", _uptime());
-  // return 0;
+  return snprintf(buf, len, "t %u\n", _uptime());
 }
 
 static char dispinfo[128] __attribute__((used));
