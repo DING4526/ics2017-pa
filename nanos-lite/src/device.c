@@ -9,18 +9,46 @@ static const char *keyname[256] __attribute__((used)) = {
 };
 
 size_t events_read(void *buf, size_t len) {
-  int key = _read_key();
+  static char event[64];
+  static int event_len = 0;
+  static int event_pos = 0;
 
-  if (key != _KEY_NONE) {
-    int is_down = (key & 0x8000) != 0;
-    int keycode = key & 0x7fff;
-
-    return snprintf(buf, len, "%s %s\n",
-        is_down ? "kd" : "ku",
-        keyname[keycode]);
+  if (len == 0) {
+    return 0;
   }
 
-  return snprintf(buf, len, "t %u\n", _uptime());
+  if (event_pos >= event_len) {
+    int key = _read_key();
+
+    if (key != _KEY_NONE) {
+      int is_down = (key & 0x8000) != 0;
+      int keycode = key & 0x7fff;
+
+      if (keycode > _KEY_NONE && keycode < 256 && keyname[keycode] != NULL) {
+        event_len = sprintf(event, "%s %s\n",
+            is_down ? "kd" : "ku",
+            keyname[keycode]);
+      }
+      else {
+        event_len = 0;
+      }
+    }
+    else {
+      event_len = sprintf(event, "t %d\n", (int)_uptime());
+    }
+
+    event_pos = 0;
+  }
+
+  size_t n = event_len - event_pos;
+  if (n > len) {
+    n = len;
+  }
+
+  memcpy(buf, event + event_pos, n);
+  event_pos += n;
+
+  return n;
 }
 
 static char dispinfo[128] __attribute__((used));
