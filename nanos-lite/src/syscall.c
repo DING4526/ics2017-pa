@@ -1,5 +1,6 @@
 #include "common.h"
 #include "syscall.h"
+#include "fs.h"
 
 _RegSet* do_syscall(_RegSet *r) {
   uintptr_t a[4];
@@ -21,6 +22,14 @@ _RegSet* do_syscall(_RegSet *r) {
       _halt(a[1] == 0 ? 0 : 0);
       break;
 
+    case SYS_write:
+      r->eax = fs_write(a[1], (void *)a[2], a[3]);
+      break;
+
+    case SYS_brk:
+      r->eax = 0;
+      break;
+      
     default:
       panic("Unhandled syscall ID = %d", a[0]);
   }
