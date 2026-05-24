@@ -12,12 +12,14 @@ size_t events_read(void *buf, size_t len) {
   int key = _read_key();
 
   if (key != _KEY_NONE) {
-    int is_down = key & 0x8000;
-    int keycode = key & ~0x8000;
+    int is_keydown = key & 0x8000;
+    int keycode = key & 0x7fff;
 
-    return snprintf(buf, len, "%s %s\n",
-        is_down ? "kd" : "ku",
-        keyname[keycode]);
+    if (keycode >= 0 && keycode < 256) {
+      return snprintf(buf, len, "%s %s\n",
+          is_keydown ? "kd" : "ku",
+          keyname[keycode]);
+    }
   }
 
   return snprintf(buf, len, "t %d\n", _uptime());
