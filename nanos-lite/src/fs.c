@@ -3,6 +3,10 @@
 void ramdisk_read(void *buf, off_t offset, size_t len);
 void ramdisk_write(const void *buf, off_t offset, size_t len);
 
+size_t events_read(void *buf, size_t len);
+size_t dispinfo_read(void *buf, off_t offset, size_t len);
+size_t fb_write(const void *buf, off_t offset, size_t len);
+
 typedef struct {
   char *name;
   size_t size;
@@ -27,6 +31,7 @@ static Finfo file_table[] __attribute__((used)) = {
 
 void init_fs() {
   // TODO: initialize the size of /dev/fb
+  file_table[FD_FB].size = _screen.width * _screen.height * sizeof(uint32_t);
 }
 
 int fs_open(const char *pathname, int flags, int mode) {
@@ -43,6 +48,17 @@ int fs_open(const char *pathname, int flags, int mode) {
 
 size_t fs_read(int fd, void *buf, size_t len) {
   assert(fd >= 0 && fd < NR_FILES);
+
+  if (fd == FD_EVENTS) {
+    return events_read(buf, len);
+  }
+
+  if (fd == FD_DISPINFO) {
+    Finfo *f = &file_table[fd];
+    size_t ret = dispinfo_read(buf, f->open_offset, len);
+    f->open_offset += ret;
+    return ret;
+  }
 
   Finfo *f = &file_table[fd];
 
@@ -65,6 +81,13 @@ size_t fs_write(int fd, const void *buf, size_t len) {
       _putc(p[i]);
     }
     return len;
+  }
+
+  if (fd == FD_FB) {
+    Finfo *f = &file_table[fd];
+    size_t ret = fb_write(buf, f->open_offset, len);
+    f->open_offset += ret;
+    return ret;
   }
 
   Finfo *f = &file_table[fd];
