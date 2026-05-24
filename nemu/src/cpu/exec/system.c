@@ -31,9 +31,6 @@ make_EHelper(mov_cr2r) {
 make_EHelper(int) {
   raise_intr(id_dest->val, decoding.seq_eip);
 
-  decoding.is_jmp = 1;
-  decoding.jmp_eip = cpu.eip;
-
   print_asm("int %s", id_dest->str);
 
 #ifdef DIFF_TEST
