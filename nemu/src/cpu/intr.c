@@ -6,7 +6,18 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
    * That is, use ``NO'' to index the IDT.
    */
 
-  TODO();
+  rtl_push(&cpu.eflags);
+  rtl_push(&cpu.cs);
+  rtl_push(&ret_addr);
+
+  vaddr_t idt_entry = cpu.idtr.base + NO * 8;
+
+  uint32_t lo = vaddr_read(idt_entry, 4);
+  uint32_t hi = vaddr_read(idt_entry + 4, 4);
+
+  vaddr_t target = (lo & 0x0000ffff) | (hi & 0xffff0000);
+
+  cpu.eip = target;
 }
 
 void dev_raise_intr() {

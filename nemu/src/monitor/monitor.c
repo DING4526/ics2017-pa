@@ -83,6 +83,9 @@ static inline void restart() {
   /* Set the initial instruction pointer. */
   cpu.eip = ENTRY_START;
 
+  cpu.cs = 8;
+  cpu.eflags = 0x2;
+
 #ifdef DIFF_TEST
   // 固定寄存器初值以适配 DIFF_TEST
   cpu.esp = 0x200000;
