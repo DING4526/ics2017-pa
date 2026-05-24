@@ -9,47 +9,18 @@ static const char *keyname[256] __attribute__((used)) = {
 };
 
 size_t events_read(void *buf, size_t len) {
-  static char evbuf[64];
-  static size_t evlen = 0;
-  static size_t evpos = 0;
+  int key = _read_key();
 
-  if (len == 0) {
-    return 0;
+  if (key != _KEY_NONE) {
+    int is_down = (key & 0x8000) != 0;
+    int keycode = key & 0x7fff;
+
+    return snprintf(buf, len, "%s %s\n",
+        is_down ? "kd" : "ku",
+        keyname[keycode]);
   }
 
-  if (evpos >= evlen) {
-    int key = _read_key();
-
-    if (key != _KEY_NONE) {
-      int is_down = (key & 0x8000) != 0;
-      int keycode = key & 0x7fff;
-
-      if (keycode > _KEY_NONE && keycode < 256 && keyname[keycode] != NULL) {
-        sprintf(evbuf, "%s %s\n",
-            is_down ? "kd" : "ku",
-            keyname[keycode]);
-      }
-      else {
-        sprintf(evbuf, "t %d\n", (int)_uptime());
-      }
-    }
-    else {
-      sprintf(evbuf, "t %d\n", (int)_uptime());
-    }
-
-    evlen = strlen(evbuf);
-    evpos = 0;
-  }
-
-  size_t n = evlen - evpos;
-  if (n > len) {
-    n = len;
-  }
-
-  memcpy(buf, evbuf + evpos, n);
-  evpos += n;
-
-  return n;
+  return snprintf(buf, len, "t %d\n", (int)_uptime());
 }
 
 
