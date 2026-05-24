@@ -37,29 +37,43 @@ static int key_f = 0, key_r = 0;
 
 #define KEYDOWN_MASK 0x8000
 
+static void push_key(uint32_t am_scancode) {
+  if ((i8042_status_port_base[0] & I8042_STATUS_HASKEY_MASK) == 0) {
+    i8042_data_port_base[0] = am_scancode;
+    i8042_status_port_base[0] |= I8042_STATUS_HASKEY_MASK;
+  }
+  else {
+    key_queue[key_r] = am_scancode;
+    key_r = (key_r + 1) % KEY_QUEUE_LEN;
+  }
+}
+
 void send_key(uint8_t scancode, bool is_keydown) {
   if (nemu_state == NEMU_RUNNING &&
       keymap[scancode] != _KEY_NONE) {
     uint32_t am_scancode = keymap[scancode] | (is_keydown ? KEYDOWN_MASK : 0);
-    key_queue[key_r] = am_scancode;
-    key_r = (key_r + 1) % KEY_QUEUE_LEN;
-    printf("send_key: scancode=%d down=%d am=%x\n", scancode, is_keydown, am_scancode);
+
+    push_key(am_scancode);
+  }
+}
+
+static void load_key_from_queue() {
+  if ((i8042_status_port_base[0] & I8042_STATUS_HASKEY_MASK) == 0) {
+    if (key_f != key_r) {
+      i8042_data_port_base[0] = key_queue[key_f];
+      key_f = (key_f + 1) % KEY_QUEUE_LEN;
+      i8042_status_port_base[0] |= I8042_STATUS_HASKEY_MASK;
+    }
   }
 }
 
 void i8042_io_handler(ioaddr_t addr, int len, bool is_write) {
   if (!is_write) {
-    if (addr == I8042_DATA_PORT) {
-      i8042_status_port_base[0] &= ~I8042_STATUS_HASKEY_MASK;
+    if (addr == I8042_STATUS_PORT) {
+      load_key_from_queue();
     }
-    else if (addr == I8042_STATUS_PORT) {
-      if ((i8042_status_port_base[0] & I8042_STATUS_HASKEY_MASK) == 0) {
-        if (key_f != key_r) {
-          i8042_data_port_base[0] = key_queue[key_f];
-          i8042_status_port_base[0] |= I8042_STATUS_HASKEY_MASK;
-          key_f = (key_f + 1) % KEY_QUEUE_LEN;
-        }
-      }
+    else if (addr == I8042_DATA_PORT) {
+      i8042_status_port_base[0] &= ~I8042_STATUS_HASKEY_MASK;
     }
   }
 }
