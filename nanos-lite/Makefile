@@ -1,6 +1,7 @@
 NAME = nanos-lite
 
 ARCH ?= x86-nemu
+export ARCH
 
 SRCS = $(shell find -L ./src/ -name "*.c" -o -name "*.cpp" -o -name "*.S")
 LIBS = klib
