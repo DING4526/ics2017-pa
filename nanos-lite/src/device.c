@@ -22,7 +22,8 @@ size_t events_read(void *buf, size_t len) {
     }
   }
 
-  return snprintf(buf, len, "t %d\n", _uptime());
+  // return snprintf(buf, len, "t %d\n", _uptime());
+  return 0;
 }
 
 static char dispinfo[128] __attribute__((used));
