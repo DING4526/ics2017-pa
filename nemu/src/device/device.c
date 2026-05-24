@@ -38,33 +38,35 @@ static void timer_sig_handler(int signum) {
 }
 
 void device_update() {
+  SDL_Event event;
+  while (SDL_PollEvent(&event)) {
+    switch (event.type) {
+      case SDL_QUIT:
+        exit(0);
+
+      case SDL_KEYDOWN:
+      case SDL_KEYUP:
+        if (event.key.repeat == 0) {
+          uint8_t k = event.key.keysym.scancode;
+          bool is_keydown = (event.key.type == SDL_KEYDOWN);
+          send_key(k, is_keydown);
+        }
+        break;
+
+      default:
+        break;
+    }
+  }
+
   if (!device_update_flag) {
     return;
   }
+
   device_update_flag = false;
 
   if (update_screen_flag) {
     update_screen();
     update_screen_flag = false;
-  }
-
-  SDL_Event event;
-  while (SDL_PollEvent(&event)) {
-    switch (event.type) {
-      case SDL_QUIT: exit(0);
-
-                     // If a key was pressed
-      case SDL_KEYDOWN:
-      case SDL_KEYUP: {
-                        if (event.key.repeat == 0) {
-                          uint8_t k = event.key.keysym.scancode;
-                          bool is_keydown = (event.key.type == SDL_KEYDOWN);
-                          send_key(k, is_keydown);
-                          break;
-                        }
-                      }
-      default: break;
-    }
   }
 }
 
