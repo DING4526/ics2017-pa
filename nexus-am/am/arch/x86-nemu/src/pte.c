@@ -101,5 +101,18 @@ void _unmap(_Protect *p, void *va) {
 }
 
 _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *const argv[], char *const envp[]) {
-  return NULL;
+  _switch(p);
+
+  _RegSet *tf = (_RegSet *)((uintptr_t)ustack.end - sizeof(_RegSet));
+  memset(tf, 0, sizeof(_RegSet));
+
+  tf->eip = (uintptr_t)entry;
+  tf->cs = KSEL(SEG_KCODE);
+  tf->eflags = 0x2;
+  tf->esp = (uintptr_t)ustack.end;
+
+  tf->irq = 0;
+  tf->error_code = 0;
+
+  return tf;
 }

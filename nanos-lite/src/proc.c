@@ -20,18 +20,41 @@ void load_prog(const char *filename) {
   pcb[i].cur_brk = get_program_break();
   pcb[i].max_brk = pcb[i].cur_brk;
 
-  // TODO: remove the following three lines after you have implemented _umake()
-  _switch(&pcb[i].as);
-  current = &pcb[i];
-  ((void (*)(void))entry)();
+  _Area ustack;
+  ustack.start = pcb[i].as.area.end - STACK_SIZE;
+  ustack.end = pcb[i].as.area.end;
 
-  _Area stack;
-  stack.start = pcb[i].stack;
-  stack.end = stack.start + sizeof(pcb[i].stack);
+  for (uintptr_t va = (uintptr_t)ustack.start; va < (uintptr_t)ustack.end; va += PGSIZE) {
+    void *pa = new_page();
+    memset(pa, 0, PGSIZE);
+    _map(&pcb[i].as, (void *)va, pa);
+  }
 
-  pcb[i].tf = _umake(&pcb[i].as, stack, stack, (void *)entry, NULL, NULL);
+  _Area kstack;
+  kstack.start = pcb[i].stack;
+  kstack.end = kstack.start + sizeof(pcb[i].stack);
+
+  pcb[i].tf = _umake(&pcb[i].as, ustack, kstack, (void *)entry, NULL, NULL);
+
+  Log("load_prog: %s entry=%p ustack=[%p,%p) tf=%p",
+      filename, entry, ustack.start, ustack.end, pcb[i].tf);
 }
 
 _RegSet* schedule(_RegSet *prev) {
-  return NULL;
+  if (current != NULL && prev != NULL) {
+    current->tf = prev;
+  }
+
+  if (nr_proc == 0) {
+    panic("schedule: no process");
+  }
+
+  if (current == NULL) {
+    current = &pcb[0];
+  }
+
+  _switch(&current->as);
+
+  return current->tf;
 }
+
