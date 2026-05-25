@@ -86,6 +86,9 @@ static inline void restart() {
   cpu.cs = 8;
   cpu.eflags = 0x2;
 
+  cpu.cr0.val = 0x60000011;
+  cpu.cr3.val = 0;
+
 #ifdef DIFF_TEST
   // 固定寄存器初值以适配 DIFF_TEST
   cpu.esp = 0x200000;

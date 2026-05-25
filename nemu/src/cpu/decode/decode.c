@@ -145,6 +145,53 @@ make_DHelper(lea_M2G) {
   decode_op_rm(eip, id_src, false, id_dest, false);
 }
 
+/* CRx <- GPR 
+ * GPR <- CRx
+ */
+make_DHelper(mov_cr2r) {
+  ModR_M m;
+  m.val = instr_fetch(eip, 1);
+
+  assert(m.mod == 3);
+
+  id_src->type = OP_TYPE_REG;
+  id_src->width = 4;
+  id_src->reg = m.reg;
+  id_src->val = 0;
+
+  id_dest->type = OP_TYPE_REG;
+  id_dest->width = 4;
+  id_dest->reg = m.R_M;
+  rtl_lr(&id_dest->val, id_dest->reg, id_dest->width);
+
+#ifdef DEBUG
+  snprintf(id_src->str, OP_STR_SIZE, "%%cr%d", id_src->reg);
+  snprintf(id_dest->str, OP_STR_SIZE, "%%%s", reg_name(id_dest->reg, 4));
+#endif
+}
+
+make_DHelper(mov_r2cr) {
+  ModR_M m;
+  m.val = instr_fetch(eip, 1);
+
+  assert(m.mod == 3);
+
+  id_src->type = OP_TYPE_REG;
+  id_src->width = 4;
+  id_src->reg = m.R_M;
+  rtl_lr(&id_src->val, id_src->reg, id_src->width);
+
+  id_dest->type = OP_TYPE_REG;
+  id_dest->width = 4;
+  id_dest->reg = m.reg;
+  id_dest->val = 0;
+
+#ifdef DEBUG
+  snprintf(id_src->str, OP_STR_SIZE, "%%%s", reg_name(id_src->reg, 4));
+  snprintf(id_dest->str, OP_STR_SIZE, "%%cr%d", id_dest->reg);
+#endif
+}
+
 /* AL <- Ib
  * eAX <- Iv
  */
