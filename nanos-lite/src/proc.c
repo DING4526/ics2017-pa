@@ -20,16 +20,30 @@ void load_prog(const char *filename) {
   pcb[i].cur_brk = get_program_break();
   pcb[i].max_brk = pcb[i].cur_brk;
 
-  // TODO: remove the following three lines after you have implemented _umake()
-  _switch(&pcb[i].as);
-  current = &pcb[i];
-  ((void (*)(void))entry)();
-
   _Area stack;
   stack.start = pcb[i].stack;
   stack.end = stack.start + sizeof(pcb[i].stack);
 
   pcb[i].tf = _umake(&pcb[i].as, stack, stack, (void *)entry, NULL, NULL);
+
+  // TODO: remove the following temporary direct-jump code after _umake() works.
+  uintptr_t ustack_top = (uintptr_t)pcb[i].as.area.end;
+  for (uintptr_t va = ustack_top - STACK_SIZE; va < ustack_top; va += PGSIZE) {
+    void *pa = new_page();
+    memset(pa, 0, PGSIZE);
+    _map(&pcb[i].as, (void *)va, pa);
+  }
+
+  _switch(&pcb[i].as);
+  current = &pcb[i];
+
+  asm volatile(
+      "movl %0, %%esp; "
+      "jmp *%1"
+      :
+      : "r"(ustack_top), "r"(entry)
+      : "memory"
+  );
 }
 
 _RegSet* schedule(_RegSet *prev) {
