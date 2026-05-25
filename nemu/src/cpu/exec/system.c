@@ -24,8 +24,8 @@ make_EHelper(mov_r2cr) {
       panic("mov_r2cr: unsupported control register cr%d", id_dest->reg);
   }
 
-  Log("mov to cr%d = 0x%08x", id_dest->reg,
-    id_dest->reg == 0 ? cpu.cr0.val : cpu.cr3.val);
+  // Log("mov to cr%d = 0x%08x", id_dest->reg,
+  //   id_dest->reg == 0 ? cpu.cr0.val : cpu.cr3.val);
 
   print_asm("movl %%%s,%%cr%d", reg_name(id_src->reg, 4), id_dest->reg);
 }
