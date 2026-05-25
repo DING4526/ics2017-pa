@@ -7,6 +7,12 @@
 void ramdisk_read(void *buf, off_t offset, size_t len);
 size_t get_ramdisk_size(void);
 
+static uintptr_t program_break = 0;
+
+uintptr_t get_program_break(void) {
+  return program_break;
+}
+
 static void load_page(_Protect *as, int fd, uintptr_t va, size_t len) {
   void *pa = new_page();
   memset(pa, 0, PGSIZE);
@@ -39,6 +45,8 @@ uintptr_t loader(_Protect *as, const char *filename) {
   }
 
   fs_close(fd);
+
+  program_break = PGROUNDUP((uintptr_t)DEFAULT_ENTRY + size);
 
   return (uintptr_t)DEFAULT_ENTRY;
 }

@@ -7,12 +7,18 @@ static int nr_proc = 0;
 PCB *current = NULL;
 
 uintptr_t loader(_Protect *as, const char *filename);
+uintptr_t get_program_break(void);
 
 void load_prog(const char *filename) {
   int i = nr_proc ++;
+  assert(i < MAX_NR_PROC);
+
   _protect(&pcb[i].as);
 
   uintptr_t entry = loader(&pcb[i].as, filename);
+
+  pcb[i].cur_brk = get_program_break();
+  pcb[i].max_brk = pcb[i].cur_brk;
 
   // TODO: remove the following three lines after you have implemented _umake()
   _switch(&pcb[i].as);

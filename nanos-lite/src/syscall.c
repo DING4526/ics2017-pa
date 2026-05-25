@@ -1,6 +1,7 @@
 #include "common.h"
 #include "syscall.h"
 #include "fs.h"
+#include "memory.h"
 
 _RegSet* do_syscall(_RegSet *r) {
   uintptr_t a[4];
@@ -27,7 +28,7 @@ _RegSet* do_syscall(_RegSet *r) {
       break;
 
     case SYS_brk:
-      r->eax = 0;
+      r->eax = mm_brk(a[1]);
       break;
 
     case SYS_open:
