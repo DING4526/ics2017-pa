@@ -99,10 +99,16 @@ uint32_t vaddr_read(vaddr_t addr, int len) {
     return paddr_read(addr, len);
   }
 
-  Assert(page_off(addr) + len <= PAGE_SIZE,
-      "vaddr_read across page boundary: addr=0x%08x len=%d", addr, len);
+  if (page_off(addr) + len <= PAGE_SIZE) {
+    return paddr_read(page_translate(addr, false), len);
+  }
 
-  return paddr_read(page_translate(addr, false), len);
+  uint32_t data = 0;
+  for (int i = 0; i < len; i ++) {
+    uint32_t byte = paddr_read(page_translate(addr + i, false), 1);
+    data |= byte << (i * 8);
+  }
+  return data;
 }
 
 void vaddr_write(vaddr_t addr, int len, uint32_t data) {
@@ -113,8 +119,12 @@ void vaddr_write(vaddr_t addr, int len, uint32_t data) {
     return;
   }
 
-  Assert(page_off(addr) + len <= PAGE_SIZE,
-      "vaddr_write across page boundary: addr=0x%08x len=%d", addr, len);
+  if (page_off(addr) + len <= PAGE_SIZE) {
+    paddr_write(page_translate(addr, true), len, data);
+    return;
+  }
 
-  paddr_write(page_translate(addr, true), len, data);
+  for (int i = 0; i < len; i ++) {
+    paddr_write(page_translate(addr + i, true), 1, data >> (i * 8));
+  }
 }
