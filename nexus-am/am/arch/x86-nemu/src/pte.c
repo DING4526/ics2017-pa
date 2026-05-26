@@ -106,7 +106,7 @@ _RegSet *_umake(_Protect *p, _Area ustack, _Area kstack, void *entry, char *cons
 
   tf->eip = (uintptr_t)entry;
   tf->cs = KSEL(SEG_KCODE);
-  tf->eflags = 0x2;
+  tf->eflags = FL_IF | 0x2;
   tf->esp = (uintptr_t)ustack.end - 32;
 
   tf->irq = 0;

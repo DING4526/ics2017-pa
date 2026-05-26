@@ -1,6 +1,10 @@
 #include "cpu/exec.h"
 #include "memory/mmu.h"
 
+#define IRQ_TIMER 32
+
+static volatile bool intr_pending = false;
+
 void raise_intr(uint8_t NO, vaddr_t ret_addr) {
   /* TODO: Trigger an interrupt/exception with ``NO''.
    * That is, use ``NO'' to index the IDT.
@@ -9,6 +13,8 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
   rtl_push(&cpu.eflags);
   rtl_push(&cpu.cs);
   rtl_push(&ret_addr);
+
+  cpu.IF = 0;
 
   vaddr_t idt_entry = cpu.idtr.base + NO * 8;
 
@@ -25,4 +31,16 @@ void raise_intr(uint8_t NO, vaddr_t ret_addr) {
 }
 
 void dev_raise_intr() {
+  intr_pending = true;
+}
+
+void query_intr() {
+  if (intr_pending && cpu.IF) {
+    intr_pending = false;
+
+    raise_intr(IRQ_TIMER, cpu.eip);
+
+    cpu.eip = decoding.jmp_eip;
+    decoding.is_jmp = 0;
+  }
 }

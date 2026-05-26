@@ -43,6 +43,7 @@
 int nemu_state = NEMU_STOP;
 
 void exec_wrapper(bool);
+void query_intr(void);
 
 /* Simulate how the CPU works. */
 void cpu_exec(uint64_t n) {
@@ -83,6 +84,8 @@ void cpu_exec(uint64_t n) {
 #ifdef HAS_IOE
     extern void device_update();
     device_update();
+
+    query_intr();
 #endif
 
     if (nemu_state != NEMU_RUNNING) { return; }

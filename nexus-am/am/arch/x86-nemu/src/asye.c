@@ -5,6 +5,7 @@ static _RegSet* (*H)(_Event, _RegSet*) = NULL;
 
 void vecsys();
 void vectrap();
+void vecirq0();
 void vecnull();
 
 _RegSet* irq_handle(_RegSet *tf) {
@@ -12,9 +13,21 @@ _RegSet* irq_handle(_RegSet *tf) {
   if (H) {
     _Event ev;
     switch (tf->irq) {
-      case 0x80: ev.event = _EVENT_SYSCALL; break;
-      case 0x81: ev.event = _EVENT_TRAP; break;
-      default: ev.event = _EVENT_ERROR; break;
+      case 0x80: 
+        ev.event = _EVENT_SYSCALL; 
+        break;
+
+      case 0x81: 
+        ev.event = _EVENT_TRAP; 
+        break;
+
+      case 0x20:
+        ev.event = _EVENT_IRQ_TIME;
+        break;
+
+      default: 
+        ev.event = _EVENT_ERROR; 
+        break;
     }
 
     next = H(ev, tf);
@@ -28,6 +41,8 @@ _RegSet* irq_handle(_RegSet *tf) {
 
 static GateDesc idt[NR_IRQ];
 
+extern void irq0();
+
 void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
   // initialize IDT
   for (unsigned int i = 0; i < NR_IRQ; i ++) {
@@ -38,6 +53,8 @@ void _asye_init(_RegSet*(*h)(_Event, _RegSet*)) {
   idt[0x80] = GATE(STS_TG32, KSEL(SEG_KCODE), vecsys, DPL_USER);
   // trap
   idt[0x81] = GATE(STS_TG32, KSEL(SEG_KCODE), vectrap, DPL_KERN);
+  // timer interrupt
+  idt[0x20] = GATE(STS_IG32, KSEL(SEG_KCODE), vecirq0, DPL_KERN);
 
   set_idt(idt, sizeof(idt));
 
