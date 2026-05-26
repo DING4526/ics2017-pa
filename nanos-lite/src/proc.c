@@ -9,6 +9,10 @@ PCB *current = NULL;
 uintptr_t loader(_Protect *as, const char *filename);
 uintptr_t get_program_break(void);
 
+static int pcb_id(PCB *p) {
+  return p - pcb;
+}
+
 void load_prog(const char *filename) {
   int i = nr_proc ++;
   assert(i < MAX_NR_PROC);
@@ -41,20 +45,23 @@ void load_prog(const char *filename) {
 }
 
 _RegSet* schedule(_RegSet *prev) {
-  if (current != NULL && prev != NULL) {
-    current->tf = prev;
-  }
-
   if (nr_proc == 0) {
     panic("schedule: no process");
   }
 
+  if (current != NULL && prev != NULL) {
+    current->tf = prev;
+  }
+
   if (current == NULL) {
     current = &pcb[0];
+  }
+  else {
+    int next = (pcb_id(current) + 1) % nr_proc;
+    current = &pcb[next];
   }
 
   _switch(&current->as);
 
   return current->tf;
 }
-
