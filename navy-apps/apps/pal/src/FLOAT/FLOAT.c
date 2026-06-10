@@ -8,7 +8,30 @@ FLOAT F_mul_F(FLOAT a, FLOAT b) {
 
 FLOAT F_div_F(FLOAT a, FLOAT b) {
   assert(b != 0);
-  return (FLOAT)(((int64_t)a * F_SCALE) / b);
+
+  int sign = 1;
+  if (a < 0) {
+    a = -a;
+    sign = -sign;
+  }
+  if (b < 0) {
+    b = -b;
+    sign = -sign;
+  }
+
+  uint32_t q = a / b;
+  uint32_t r = a % b;
+
+  /*
+   * a / b 的整数部分是 q。
+   * 小数部分通过 r 继续放大 2^16 后除以 b。
+   *
+   * result = (a / b) * 2^16
+   *        = q * 2^16 + r * 2^16 / b
+   */
+  uint32_t res = (q << F_SHIFT) + ((r << F_SHIFT) / b);
+
+  return sign < 0 ? -(FLOAT)res : (FLOAT)res;
 }
 
 FLOAT f2F(float a) {
