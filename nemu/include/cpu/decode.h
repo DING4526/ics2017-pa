@@ -81,6 +81,7 @@ make_DHelper(SI2E);
 make_DHelper(SI_E2G);
 make_DHelper(I_E2G);
 make_DHelper(I_G2E);
+make_DHelper(Ib_G2E);
 make_DHelper(I);
 make_DHelper(r);
 make_DHelper(E);
