@@ -83,7 +83,11 @@ void cpu_exec(uint64_t n) {
 
 #ifdef HAS_IOE
     extern void device_update();
-    device_update();
+    extern bool device_update_pending();
+
+    if (device_update_pending()) {
+      device_update();
+    }
 
     query_intr();
 #endif

@@ -11,8 +11,8 @@
 
 static uint64_t jiffy = 0;
 static struct itimerval it;
-static int device_update_flag = false;
-static int update_screen_flag = false;
+static volatile sig_atomic_t device_update_flag = false;
+static volatile sig_atomic_t update_screen_flag = false;
 
 void init_serial();
 void init_timer();
@@ -37,8 +37,12 @@ static void timer_sig_handler(int signum) {
   Assert(ret == 0, "Can not set timer");
 }
 
+bool device_update_pending() {
+  return device_update_flag;
+}
+
 void device_update() {
-  
+
   if (!device_update_flag) {
     return;
   }
