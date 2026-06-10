@@ -509,6 +509,9 @@ PAL_SplashScreen(
 
 void
 main_loop() {
+
+   test_FLOAT();
+   
    WORD          wScreenWidth = 0, wScreenHeight = 0;
    BOOL          fFullScreen = FALSE;
 
