@@ -1,4 +1,5 @@
 #include "common.h"
+#include "proc.h"
 
 _RegSet* do_syscall(_RegSet *r);
 _RegSet* schedule(_RegSet *prev);
