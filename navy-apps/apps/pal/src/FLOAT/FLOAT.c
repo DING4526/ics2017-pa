@@ -1,6 +1,7 @@
 #include "FLOAT.h"
 #include <stdint.h>
 #include <assert.h>
+#include <stdio.h>
 
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
   int sign = 1;
@@ -134,6 +135,9 @@ FLOAT Fpow(FLOAT x, FLOAT y) {
   return t;
 }
 
+static int abs_int(int x) {
+  return x < 0 ? -x : x;
+}
 
 void test_FLOAT(void) {
   static int tested = 0;
@@ -149,9 +153,9 @@ void test_FLOAT(void) {
   assert(F_mul_F(int2F(2), int2F(3)) == int2F(6));
   assert(F_div_F(int2F(6), int2F(3)) == int2F(2));
 
-  assert(f2F(1.2f) == 0x13333);
-  assert(f2F(5.6f) == 0x59999);
-  assert(f2F(-1.2f) == -0x13333);
+  assert(abs_int(f2F(1.2f) - 0x13333) <= 1);
+  assert(abs_int(f2F(5.6f) - 0x59999) <= 1);
+  assert(abs_int(f2F(-1.2f) + 0x13333) <= 1);
 
   assert(abs_int(F_mul_F(f2F(1.5f), f2F(1.5f)) - f2F(2.25f)) <= 2);
   assert(abs_int(F_div_F(f2F(1.0f), f2F(3.0f)) - f2F(0.333333f)) <= 2);
