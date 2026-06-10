@@ -120,6 +120,11 @@ FLOAT Fpow(FLOAT x, FLOAT y) {
 
 
 void test_FLOAT(void) {
+  static int tested = 0;
+  if (tested) {
+    return;
+  }
+  tested = 1;
   assert(int2F(1) == 0x00010000);
   assert(int2F(10) == 0x000a0000);
 
@@ -131,4 +136,6 @@ void test_FLOAT(void) {
   assert(f2F(1.2f) == 0x13333);
   assert(f2F(5.6f) == 0x59999);
   assert(f2F(-1.2f) == -0x13333);
+
+  printf("[PA5] FLOAT test passed.\n");
 }
