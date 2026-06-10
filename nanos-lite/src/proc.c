@@ -10,6 +10,10 @@ PCB *current = NULL;
 uintptr_t loader(_Protect *as, const char *filename);
 uintptr_t get_program_break(void);
 
+bool need_schedule() {
+  return nr_proc > 1;
+}
+
 // static int pcb_id(PCB *p) {
 //   return p - pcb;
 // }
