@@ -96,12 +96,18 @@ FLOAT Fabs(FLOAT a) {
 /* Functions below are already implemented */
 
 FLOAT Fsqrt(FLOAT x) {
-
   FLOAT dt, t = int2F(2);
+  int iter = 0;
 
   do {
     dt = F_div_int((F_div_F(x, t) - t), 2);
     t += dt;
+
+    iter ++;
+    if (iter > 100) {
+      printf("[FLOAT] Fsqrt stuck: x=0x%x t=0x%x dt=0x%x\n", x, t, dt);
+      assert(0);
+    }
   } while(Fabs(dt) > f2F(1e-4));
 
   return t;
@@ -110,11 +116,19 @@ FLOAT Fsqrt(FLOAT x) {
 FLOAT Fpow(FLOAT x, FLOAT y) {
   /* we only compute x^0.333 */
   FLOAT t2, dt, t = int2F(2);
+  int iter = 0;
 
   do {
     t2 = F_mul_F(t, t);
     dt = (F_div_F(x, t2) - t) / 3;
     t += dt;
+
+    iter ++;
+    if (iter > 100) {
+      printf("[FLOAT] Fpow stuck: x=0x%x y=0x%x t=0x%x t2=0x%x dt=0x%x\n",
+          x, y, t, t2, dt);
+      assert(0);
+    }
   } while(Fabs(dt) > f2F(1e-4));
 
   return t;
@@ -138,6 +152,16 @@ void test_FLOAT(void) {
   assert(f2F(1.2f) == 0x13333);
   assert(f2F(5.6f) == 0x59999);
   assert(f2F(-1.2f) == -0x13333);
+
+  assert(abs_int(F_mul_F(f2F(1.5f), f2F(1.5f)) - f2F(2.25f)) <= 2);
+  assert(abs_int(F_div_F(f2F(1.0f), f2F(3.0f)) - f2F(0.333333f)) <= 2);
+  assert(abs_int(F_div_F(f2F(10.0f), f2F(4.0f)) - f2F(2.5f)) <= 2);
+
+  FLOAT cube = Fpow(int2F(8), f2F(0.333f));
+  assert(abs_int(cube - int2F(2)) <= 5);
+
+  FLOAT root = Fsqrt(int2F(4));
+  assert(abs_int(root - int2F(2)) <= 5);
 
   printf("[PA5] FLOAT test passed.\n");
 }
