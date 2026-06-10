@@ -4,8 +4,12 @@
 
 #define PMEM_SIZE (128 * 1024 * 1024)
 
+static inline bool in_pmem(paddr_t addr) {
+  return addr < PMEM_SIZE;
+}
+
 #define pmem_rw(addr, type) *(type *)({\
-    Assert(addr < PMEM_SIZE, "physical address(0x%08x) is out of bound", addr); \
+    Assert(in_pmem(addr), "physical address(0x%08x) is out of bound", addr); \
     guest_to_host(addr); \
     })
 
@@ -14,6 +18,12 @@ uint8_t pmem[PMEM_SIZE];
 /* Memory accessing interfaces */
 
 uint32_t paddr_read(paddr_t addr, int len) {
+  assert(len == 1 || len == 2 || len == 4);
+
+  if (in_pmem(addr)) {
+    return pmem_rw(addr, uint32_t) & (~0u >> ((4 - len) << 3));
+  }
+
 #ifdef HAS_IOE
   int map_no = is_mmio(addr);
   if (map_no != -1) {
@@ -21,10 +31,18 @@ uint32_t paddr_read(paddr_t addr, int len) {
   }
 #endif
 
-  return pmem_rw(addr, uint32_t) & (~0u >> ((4 - len) << 3));
+  panic("paddr_read: address 0x%08x is neither pmem nor mmio", addr);
+  return 0;
 }
 
 void paddr_write(paddr_t addr, int len, uint32_t data) {
+  assert(len == 1 || len == 2 || len == 4);
+
+  if (in_pmem(addr)) {
+    memcpy(guest_to_host(addr), &data, len);
+    return;
+  }
+
 #ifdef HAS_IOE
   int map_no = is_mmio(addr);
   if (map_no != -1) {
@@ -33,7 +51,7 @@ void paddr_write(paddr_t addr, int len, uint32_t data) {
   }
 #endif
 
-  memcpy(guest_to_host(addr), &data, len);
+  panic("paddr_write: address 0x%08x is neither pmem nor mmio", addr);
 }
 
 static inline uint32_t pdir_idx(vaddr_t addr) {
