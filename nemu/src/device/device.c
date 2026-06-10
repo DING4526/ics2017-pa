@@ -62,7 +62,6 @@ void device_update() {
         break;
     }
   }
-
   
   if (!device_update_flag) {
     return;
