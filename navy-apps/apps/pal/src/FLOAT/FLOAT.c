@@ -3,13 +3,8 @@
 #include <assert.h>
 
 FLOAT F_mul_F(FLOAT a, FLOAT b) {
-  return (FLOAT)(((int64_t)a * b) / F_SCALE);
-}
-
-FLOAT F_div_F(FLOAT a, FLOAT b) {
-  assert(b != 0);
-
   int sign = 1;
+
   if (a < 0) {
     a = -a;
     sign = -sign;
@@ -19,72 +14,79 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
     sign = -sign;
   }
 
-  uint32_t q = a / b;
-  uint32_t r = a % b;
+  uint32_t ua = (uint32_t)a;
+  uint32_t ub = (uint32_t)b;
 
-  /*
-   * a / b 的整数部分是 q。
-   * 小数部分通过 r 继续放大 2^16 后除以 b。
-   *
-   * result = (a / b) * 2^16
-   *        = q * 2^16 + r * 2^16 / b
-   */
-  uint32_t res = (q << F_SHIFT) + ((r << F_SHIFT) / b);
+  uint32_t a_hi = ua >> F_SHIFT;
+  uint32_t a_lo = ua & (F_SCALE - 1);
+  uint32_t b_hi = ub >> F_SHIFT;
+  uint32_t b_lo = ub & (F_SCALE - 1);
+
+  uint32_t res =
+      (a_hi * b_hi << F_SHIFT)
+    + (a_hi * b_lo)
+    + (a_lo * b_hi)
+    + ((a_lo * b_lo) >> F_SHIFT);
+
+  return sign < 0 ? -(FLOAT)res : (FLOAT)res;
+}
+
+FLOAT F_div_F(FLOAT a, FLOAT b) {
+  assert(b != 0);
+
+  int sign = 1;
+
+  if (a < 0) {
+    a = -a;
+    sign = -sign;
+  }
+  if (b < 0) {
+    b = -b;
+    sign = -sign;
+  }
+
+  uint32_t ua = (uint32_t)a;
+  uint32_t ub = (uint32_t)b;
+
+  uint32_t q = ua / ub;
+  uint32_t r = ua % ub;
+
+  uint32_t res = (q << F_SHIFT) + ((r << F_SHIFT) / ub);
 
   return sign < 0 ? -(FLOAT)res : (FLOAT)res;
 }
 
 FLOAT f2F(float a) {
-  /* You should figure out how to convert `a' into FLOAT without
-   * introducing x87 floating point instructions. Else you can
-   * not run this code in NEMU before implementing x87 floating
-   * point instructions, which is contrary to our expectation.
-   *
-   * Hint: The bit representation of `a' is already on the
-   * stack. How do you retrieve it to another variable without
-   * performing arithmetic operations on it directly?
-   */
+  union {
+    float f;
+    uint32_t u;
+  } conv;
 
-  uint32_t u = *(uint32_t *)&a;
+  conv.f = a;
+  uint32_t u = conv.u;
 
   uint32_t sign = u >> 31;
   uint32_t exp = (u >> 23) & 0xff;
   uint32_t frac = u & 0x7fffff;
 
-  assert(exp != 0xff); // NaN or Inf is not supported
+  assert(exp != 0xff);
 
   if (exp == 0) {
-    // Subnormal numbers are too small for Q16 in this PA.
     return 0;
   }
 
-  uint64_t mant = (1u << 23) | frac;
+  uint32_t mant = (1u << 23) | frac;
 
-  /*
-   * float value:
-   *   (-1)^sign * mant * 2^(exp - 127 - 23)
-   *
-   * FLOAT value should be:
-   *   real_value * 2^16
-   *
-   * Therefore:
-   *   FLOAT = mant * 2^(exp - 127 - 23 + 16)
-   *         = mant * 2^(exp - 134)
-   */
   int shift = (int)exp - 134;
 
-  uint64_t val;
+  uint32_t val;
   if (shift >= 0) {
     val = mant << shift;
   } else {
     val = mant >> (-shift);
   }
 
-  if (sign) {
-    return -(FLOAT)val;
-  } else {
-    return (FLOAT)val;
-  }
+  return sign ? -(FLOAT)val : (FLOAT)val;
 }
 
 FLOAT Fabs(FLOAT a) {
