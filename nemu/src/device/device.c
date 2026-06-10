@@ -43,6 +43,11 @@ bool device_update_pending() {
 
 void device_update() {
 
+  if (!device_update_flag) {
+    return;
+  }
+  device_update_flag = false;
+
   SDL_Event event;
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
@@ -62,11 +67,6 @@ void device_update() {
         break;
     }
   }
-  
-  if (!device_update_flag) {
-    return;
-  }
-  device_update_flag = false;
 
   if (update_screen_flag) {
     update_screen();

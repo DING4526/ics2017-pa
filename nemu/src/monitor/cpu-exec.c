@@ -85,10 +85,9 @@ void cpu_exec(uint64_t n) {
     extern void device_update();
     extern bool device_update_pending();
 
-    // if (device_update_pending()) {
-    //   device_update();
-    // }
-    device_update();
+    if (device_update_pending()) {
+      device_update();
+    }
 
     query_intr();
 #endif

@@ -7,15 +7,15 @@ static _RegSet* do_event(_Event e, _RegSet* r) {
   switch (e.event) {
     case _EVENT_SYSCALL: 
       do_syscall(r);
-      return r;
-      // return schedule(r);
+      // return r;
+      return schedule(r);
 
     case _EVENT_TRAP: 
       return schedule(r);
 
     case _EVENT_IRQ_TIME:
-      return r;
-      // return schedule(r);
+      // return r;
+      return schedule(r);
 
     default: 
       panic("Unhandled event ID = %d", e.event);
