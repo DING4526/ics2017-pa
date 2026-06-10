@@ -1,5 +1,4 @@
 #include "common.h"
-#include "proc.h"
 
 _RegSet* do_syscall(_RegSet *r);
 _RegSet* schedule(_RegSet *prev);
@@ -13,6 +12,7 @@ static _RegSet* do_event(_Event e, _RegSet* r) {
       if (need_schedule()) {
         return schedule(r);
       }
+      return r;
 
     case _EVENT_TRAP: 
       return schedule(r);
@@ -21,6 +21,7 @@ static _RegSet* do_event(_Event e, _RegSet* r) {
       if (need_schedule()) {
         return schedule(r);
       }
+      return r;
 
     default: 
       panic("Unhandled event ID = %d", e.event);
