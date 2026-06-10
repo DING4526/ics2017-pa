@@ -4,12 +4,12 @@
 
 #define PMEM_SIZE (128 * 1024 * 1024)
 
-static inline bool in_pmem(paddr_t addr) {
-  return addr < PMEM_SIZE;
+static inline bool in_pmem(paddr_t addr, int len) {
+  return addr + len <= PMEM_SIZE;
 }
 
 #define pmem_rw(addr, type) *(type *)({\
-    Assert(in_pmem(addr), "physical address(0x%08x) is out of bound", addr); \
+    Assert(addr < PMEM_SIZE, "physical address(0x%08x) is out of bound", addr); \
     guest_to_host(addr); \
     })
 
@@ -20,7 +20,7 @@ uint8_t pmem[PMEM_SIZE];
 uint32_t paddr_read(paddr_t addr, int len) {
   assert(len == 1 || len == 2 || len == 4);
 
-  if (in_pmem(addr)) {
+  if (in_pmem(addr, len)) {
     return pmem_rw(addr, uint32_t) & (~0u >> ((4 - len) << 3));
   }
 
@@ -38,7 +38,7 @@ uint32_t paddr_read(paddr_t addr, int len) {
 void paddr_write(paddr_t addr, int len, uint32_t data) {
   assert(len == 1 || len == 2 || len == 4);
 
-  if (in_pmem(addr)) {
+  if (in_pmem(addr, len)) {
     memcpy(guest_to_host(addr), &data, len);
     return;
   }
