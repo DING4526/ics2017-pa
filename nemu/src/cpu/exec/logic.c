@@ -84,52 +84,41 @@ make_EHelper(shr) {
 }
 
 make_EHelper(shrd) {
+  assert(id_dest->width == 2 || id_dest->width == 4);
+
   uint32_t count = id_src->val & 0x1f;
 
   if (count != 0) {
-    uint32_t dest = id_dest->val;
-    uint32_t src = id_src2->val;
-    uint32_t result = 0;
+    uint32_t result;
 
     if (id_dest->width == 4) {
+      uint32_t dest = id_dest->val;
+      uint32_t src = id_src2->val;
+
       result = (dest >> count) | (src << (32 - count));
     }
-    else if (id_dest->width == 2) {
-      dest &= 0xffff;
-      src &= 0xffff;
+    else {
+      uint32_t dest = id_dest->val & 0xffff;
+      uint32_t src = id_src2->val & 0xffff;
 
-      if (count < 16) {
-        result = ((dest >> count) | (src << (16 - count))) & 0xffff;
+      count &= 0xf;
+
+      if (count == 0) {
+        result = dest;
       }
       else {
-        /*
-         * Intel 手册中 count 大于操作数宽度时结果未定义。
-         * 这里给一个简单兜底，当前 PAL 触发的是 32 位 count=16，
-         * 不会走到这个分支。
-         */
-        result = 0;
+        result = ((dest >> count) | (src << (16 - count))) & 0xffff;
       }
-    }
-    else {
-      panic("shrd: unsupported operand width = %d", id_dest->width);
     }
 
     operand_write(id_dest, &result);
 
-    /*
-     * 当前 PA 场景下，shrd 主要用于 64 位乘法结果右移。
-     * 后续代码没有依赖这里的 CF/OF，和已有 shl/shr/sar 一样，
-     * 只更新 ZF/SF 即可。
-     */
     rtl_update_ZFSF(&result, id_dest->width);
   }
 
-#ifdef DEBUG
   print_asm("shrd %s,%s,%s", id_src->str, id_src2->str, id_dest->str);
-#else
-  print_asm_template3(shrd);
-#endif
 }
+
 
 make_EHelper(setcc) {
   uint8_t subcode = decoding.opcode & 0xf;
