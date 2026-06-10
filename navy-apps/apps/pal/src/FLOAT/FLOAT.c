@@ -49,10 +49,22 @@ FLOAT F_div_F(FLOAT a, FLOAT b) {
   uint32_t ua = (uint32_t)a;
   uint32_t ub = (uint32_t)b;
 
-  uint32_t q = ua / ub;
-  uint32_t r = ua % ub;
+  uint32_t int_part = ua / ub;
+  uint32_t rem = ua % ub;
 
-  uint32_t res = (q << F_SHIFT) + ((r << F_SHIFT) / ub);
+  uint32_t frac_part = 0;
+
+  for (int i = 0; i < F_SHIFT; i ++) {
+    rem <<= 1;
+    frac_part <<= 1;
+
+    if (rem >= ub) {
+      rem -= ub;
+      frac_part |= 1;
+    }
+  }
+
+  uint32_t res = (int_part << F_SHIFT) | frac_part;
 
   return sign < 0 ? -(FLOAT)res : (FLOAT)res;
 }
