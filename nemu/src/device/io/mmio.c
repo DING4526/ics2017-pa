@@ -10,6 +10,8 @@ static uint32_t mmio_space_free_index = 0;
 static paddr_t mmio_low_bound = 0xffffffff;
 static paddr_t mmio_high_bound = 0;
 
+static int last_mmio = -1;
+
 typedef struct {
   paddr_t low;
   paddr_t high;
@@ -25,18 +27,19 @@ void* add_mmio_map(paddr_t addr, int len, mmio_callback_t callback) {
   assert(nr_map < NR_MAP);
   assert(mmio_space_free_index + len <= MMIO_SPACE_MAX);
 
+  uint8_t *space_base = &mmio_space_pool[mmio_space_free_index];
+  maps[nr_map].low = addr;
+  maps[nr_map].high = addr + len - 1;
+  maps[nr_map].mmio_space = space_base;
+  maps[nr_map].callback = callback;
+
   if (addr < mmio_low_bound) {
   mmio_low_bound = addr;
   }
   if (addr + len - 1 > mmio_high_bound) {
     mmio_high_bound = addr + len - 1;
   }
-
-  uint8_t *space_base = &mmio_space_pool[mmio_space_free_index];
-  maps[nr_map].low = addr;
-  maps[nr_map].high = addr + len - 1;
-  maps[nr_map].mmio_space = space_base;
-  maps[nr_map].callback = callback;
+  
   nr_map ++;
   mmio_space_free_index += len;
   return space_base;
@@ -48,8 +51,16 @@ int is_mmio(paddr_t addr) {
     return -1;
   }
 
+  if (last_mmio != -1) {
+    MMIO_t *m = &maps[last_mmio];
+    if (addr >= m->low && addr <= m->high) {
+      return last_mmio;
+    }
+  }
+
   for (int i = 0; i < nr_map; i ++) {
     if (addr >= maps[i].low && addr <= maps[i].high) {
+      last_mmio = i;
       return i;
     }
   }
