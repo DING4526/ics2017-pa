@@ -72,56 +72,6 @@ void load_prog(const char *filename) {
 //   return current->tf;
 // }
 
-// _RegSet* schedule(_RegSet *prev) {
-
-//   if (nr_proc == 0) {
-//     panic("schedule: no process");
-//   }
-
-//   if (current != NULL && prev != NULL) {
-//     current->tf = prev;
-//   }
-
-//   system_ticks++;
-
-//   PCB *best = &pcb[0];
-//   uint32_t best_wait =
-//       system_ticks - pcb[0].last_run_tick;
-
-//   for (int i = 1; i < nr_proc; i++) {
-
-//     uint32_t wait =
-//         system_ticks - pcb[i].last_run_tick;
-
-//     if (wait > best_wait) {
-//       best = &pcb[i];
-//       best_wait = wait;
-//     }
-//   }
-
-//   current = best;
-
-//   current->last_run_tick = system_ticks;
-
-//   _switch(&current->as);
-
-//   return current->tf;
-// }
-
-
-#define PAL_WEIGHT   100
-#define HELLO_WEIGHT 1
-
-static inline uint32_t sched_weight(int idx) {
-  /*
-   * 当前 main.c 中:
-   *   load_prog("/bin/pal");   -> pcb[0]
-   *   load_prog("/bin/hello"); -> pcb[1]
-   */
-  if (idx == 0) return PAL_WEIGHT;
-  return HELLO_WEIGHT;
-}
-
 _RegSet* schedule(_RegSet *prev) {
 
   if (nr_proc == 0) {
@@ -135,18 +85,17 @@ _RegSet* schedule(_RegSet *prev) {
   system_ticks++;
 
   PCB *best = &pcb[0];
-
-  uint64_t best_score =
-      (uint64_t)(system_ticks - pcb[0].last_run_tick) * sched_weight(0);
+  uint32_t best_wait =
+      system_ticks - pcb[0].last_run_tick;
 
   for (int i = 1; i < nr_proc; i++) {
 
-    uint64_t score =
-        (uint64_t)(system_ticks - pcb[i].last_run_tick) * sched_weight(i);
+    uint32_t wait =
+        system_ticks - pcb[i].last_run_tick;
 
-    if (score > best_score) {
+    if (wait > best_wait) {
       best = &pcb[i];
-      best_score = score;
+      best_wait = wait;
     }
   }
 
@@ -158,3 +107,54 @@ _RegSet* schedule(_RegSet *prev) {
 
   return current->tf;
 }
+
+
+// #define PAL_WEIGHT   5
+// #define HELLO_WEIGHT 1
+
+// static inline uint32_t sched_weight(int idx) {
+//   /*
+//    * 当前 main.c 中:
+//    *   load_prog("/bin/pal");   -> pcb[0]
+//    *   load_prog("/bin/hello"); -> pcb[1]
+//    */
+//   if (idx == 0) return PAL_WEIGHT;
+//   return HELLO_WEIGHT;
+// }
+
+// _RegSet* schedule(_RegSet *prev) {
+
+//   if (nr_proc == 0) {
+//     panic("schedule: no process");
+//   }
+
+//   if (current != NULL && prev != NULL) {
+//     current->tf = prev;
+//   }
+
+//   system_ticks++;
+
+//   PCB *best = &pcb[0];
+
+//   uint64_t best_score =
+//       (uint64_t)(system_ticks - pcb[0].last_run_tick) * sched_weight(0);
+
+//   for (int i = 1; i < nr_proc; i++) {
+
+//     uint64_t score =
+//         (uint64_t)(system_ticks - pcb[i].last_run_tick) * sched_weight(i);
+
+//     if (score > best_score) {
+//       best = &pcb[i];
+//       best_score = score;
+//     }
+//   }
+
+//   current = best;
+
+//   current->last_run_tick = system_ticks;
+
+//   _switch(&current->as);
+
+//   return current->tf;
+// }
