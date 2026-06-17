@@ -109,7 +109,7 @@ void load_prog(const char *filename) {
 // }
 
 
-#define PAL_WEIGHT   1000
+#define PAL_WEIGHT   2000
 #define HELLO_WEIGHT 1
 
 static inline uint32_t sched_weight(int idx) {
