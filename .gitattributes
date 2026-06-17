@@ -1,0 +1,4 @@
+*.c linguist-language=C -linguist-vendored -linguist-generated -linguist-documentation
+*.h linguist-language=C -linguist-vendored -linguist-generated -linguist-documentation
+*.S linguist-language=Assembly -linguist-vendored -linguist-generated -linguist-documentation
+*.s linguist-language=Assembly -linguist-vendored -linguist-generated -linguist-documentation
